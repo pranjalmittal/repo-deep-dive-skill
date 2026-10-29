@@ -1,0 +1,145 @@
+# repo-deep-dive
+
+A [Claude Code](https://docs.claude.com/en/docs/claude-code) skill that builds a thorough,
+code-grounded understanding of a repository (a local checkout or a GitHub URL). It writes a
+`REPO_GUIDE.md` that a new engineer can actually onboard from.
+
+It tries to give you the mental model a senior engineer on the team carries: what the project
+is for, how it's shaped, what happens at runtime when its main features are used, where you'd
+go to change something, and what will bite you. Every claim cites `path:line`, and the skill
+verifies those references before it finishes.
+
+## What you get
+
+`REPO_GUIDE.md` contains:
+
+- **TL;DR** and what the project is and who uses it
+- **Tech stack** table and an annotated **repository map**
+- **Architecture**: components, dependency direction, and a Mermaid diagram
+- **Key flows** traced hop by hop through the real call chain, e.g. register → login → authenticated request
+- **Data model**, **configuration and env vars**, **integrations**
+- **Development workflow**, using only commands that exist in the repo
+- **History and ownership**: hotspots, contributors, recent focus
+- **Gotchas, risks and tech debt**
+- **Where to start**: a reading order and good first tasks
+- **Glossary** and **open questions**
+
+You also get a short summary in chat. See [`examples/`](examples/) for a full guide the
+skill generated for the [RealWorld Express + Prisma API](https://github.com/gothinkster/node-express-realworld-example-app).
+
+The skill adjusts to the question:
+
+| You ask | You get |
+|---|---|
+| "Help me understand this repo" / "I just joined this team" / "walk me through github.com/org/repo" | Full deep dive and `REPO_GUIDE.md` |
+| "What is this repo, roughly?" | Quick chat summary, with an offer of the full guide |
+| "How does auth work in this codebase?" | A focused trace with `path:line` citations, in chat |
+
+## Install
+
+Requirements: `git` and Python 3.9+ (standard library only). The [GitHub CLI](https://cli.github.com/)
+is optional; it's used for private repos and PR/issue context.
+
+**For all your projects** (personal skills):
+
+```bash
+git clone https://github.com/<owner>/repo-deep-dive.git ~/.claude/skills/repo-deep-dive
+```
+
+**For one project only** (commit it so your team gets it too):
+
+```bash
+git clone https://github.com/<owner>/repo-deep-dive.git .claude/skills/repo-deep-dive
+```
+
+**Update** with `git -C ~/.claude/skills/repo-deep-dive pull`, or use the project path instead.
+
+Claude Code picks the skill up automatically. Ask something like *"help me understand this
+repo"*, or invoke it directly with `/repo-deep-dive`.
+
+## How it works
+
+1. **Resolve the target.** Use a local path, or clone a GitHub URL (`--filter=blob:none`, so
+   history is kept but file contents are fetched lazily) into a scratch directory.
+2. **Survey.** [`scripts/repo_survey.py`](scripts/repo_survey.py) produces a fast structural
+   report: languages, layout, build, CI and infra tooling, scripts, docs, likely entry points,
+   tests, largest files, churn hotspots, contributors and TODO counts.
+3. **Map the architecture.** Entry points, components, layers, data model, config and
+   integrations. Stack-specific hints live in [`references/ecosystem_hints.md`](references/ecosystem_hints.md).
+   For large repos and monorepos, the skill fans out to parallel sub-agents per component.
+4. **Trace 2–4 key flows** end to end through the real call chain.
+5. **Development workflow, history and ownership, gotchas.**
+6. **Write the guide** from [`references/guide_template.md`](references/guide_template.md),
+   then verify every cited path and line number with [`scripts/check_paths.py`](scripts/check_paths.py).
+
+### Safety: it reads, it doesn't run
+
+The skill treats every repo as untrusted. It does not install dependencies or run build
+scripts, tests, hooks or anything else the repo ships, unless you ask it to. Package install
+scripts and Makefiles can execute arbitrary code. The only things it runs are read-only `git`
+commands and its own two scripts, which only read files.
+
+## Using the scripts on their own
+
+Both scripts are standalone and dependency-free:
+
+```bash
+# Structural survey of any checkout, as Markdown
+python3 -I scripts/repo_survey.py path/to/repo > survey.md
+
+# Check that every `path` / `path:line` cited in a Markdown doc exists (exits 1 if any are broken)
+python3 -I scripts/check_paths.py path/to/GUIDE.md path/to/repo
+```
+
+`check_paths.py` works on any doc that cites code, such as design docs and onboarding wikis. It
+ignores URL routes (`/api/tags`), code identifiers (`req.auth`), gitignored paths and fenced code
+blocks.
+
+## Repository layout
+
+```
+SKILL.md                    the skill: workflow and principles (what Claude reads)
+scripts/
+  repo_survey.py            structural survey (read-only, stdlib only)
+  check_paths.py            verifies path:line citations in a guide
+references/
+  guide_template.md         REPO_GUIDE.md structure
+  ecosystem_hints.md        where things live per stack, plus grep recipes
+evals/                      test cases for `claude plugin eval`
+benchmarks/                 with- vs. without-skill results, graded
+examples/                   a sample generated guide
+```
+
+## Evaluating changes
+
+`evals/` holds test cases in the format `claude plugin eval` reads:
+
+| Case | Tests |
+|---|---|
+| `ts-service-local-checkout` | Onboarding onto a local Express/Prisma API. It has 8 graded checks: auth flow traced, JWT secret risk flagged, accurate data model, only real commands, test setup, citations resolve, nothing executed |
+| `onboard-flask-from-url` | Full deep dive from a GitHub URL (a Python library) |
+| `focused-question-chi` | Focused-question mode on a Go library: routing, middleware and `Mount` |
+
+To run them, from the repo root (these are real, billed model runs):
+
+```bash
+claude plugin eval . --allow-tools Write,Edit,Bash --scaffold
+```
+
+In the first benchmark (one run each, so treat it as directional), the skill passed 8/8 checks
+against 6/8 without it, on the TypeScript case. It was also faster, and it produced about 7× more
+verified `file:line` citations. The outputs, grading evidence and notes are in [`benchmarks/`](benchmarks/).
+
+## Contributing
+
+Issues and PRs are welcome. Useful contributions:
+
+- Ecosystem hints for stacks that aren't covered yet (`references/ecosystem_hints.md`)
+- Better survey heuristics, such as entry-point detection or monorepo signals (`scripts/repo_survey.py`)
+- New eval cases, especially monorepos and less common languages, with graders under `evals/<case>/graders/`
+
+Keep `SKILL.md` under about 500 lines; put detail in `references/`.
+
+## License
+
+[MIT](LICENSE)
