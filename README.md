@@ -47,33 +47,55 @@ Requirements: Bash and `git` for the installer, and Python 3.9+ (standard librar
 the skill. The [GitHub CLI](https://cli.github.com/) is optional; it's used for private repos
 and PR/issue context.
 
-The installer defaults to a personal Codex skill directory:
+Run the installer without options to choose from its built-in list of common agents (Codex,
+Claude Code, Cursor, and GitHub Copilot). It installs directly into the selected agent's
+personal skill directory:
 
 ```bash
 ./install.sh
 ```
 
-Install a symlink to the current checkout for temporary use or local development:
+Pass `--agent` to install directly without the menu. Use `--scope project` to install in the
+current repository's conventional project skill directory:
+
+```bash
+./install.sh --agent codex
+./install.sh --agent codex --scope project
+```
+
+For an agent without a built-in path, the installer asks for the skill directory in an
+interactive shell:
+
+```bash
+./install.sh --agent my-agent
+```
+
+Use `--dir PATH` to provide the skill directory directly; this works for any agent and skips
+the prompt:
+
+```bash
+./install.sh --dir /path/to/agent/skills/repo-deep-dive
+```
+
+To link the current checkout for temporary use or local development, add `--link`. Edits then
+show up immediately in the installed skill:
 
 ```bash
 ./install.sh --agent codex --link
 ```
 
-The symlink points at this checkout, so edits are available immediately. Remove the symlink
-from `~/.codex/skills/repo-deep-dive` when you no longer need it.
-
-Install for another supported agent, or into the current project:
+Remove the link when you no longer need it; this leaves the checkout intact:
 
 ```bash
-./install.sh --agent claude
-./install.sh --agent cursor
-./install.sh --agent copilot --scope project
-./install.sh --agent codex --scope project
+rm /path/to/agent/skills/repo-deep-dive
 ```
 
-The installer also accepts `--dir PATH` for an agent-specific skill directory. Check your
-agent's documentation for its current skill paths. To install without first cloning this
-repository, run:
+If the destination already contains a clone of this repository, the installer updates it with
+a fast-forward-only pull. When run from a local checkout, it recognizes a link to that checkout
+as already installed and refuses to overwrite unrelated directories or links.
+
+To run the installer without first cloning this repository, specify a built-in agent or pass
+`--dir` explicitly:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/pranjalmittal/repo-deep-dive/main/install.sh | bash -s -- --agent codex
@@ -132,16 +154,15 @@ scripts/
 references/
   guide_template.md         REPO_GUIDE.md structure
   ecosystem_hints.md        where things live per stack, plus grep recipes
-evals/                      test cases for the Claude Code evaluation harness
+evals/                      representative prompts and expected outcomes
 benchmarks/                 with- vs. without-skill results, graded
 examples/                   a sample generated guide
 ```
 
 ## Evaluating changes
 
-`evals/` holds test cases in Anthropic's skill-creator format, evaluated with Claude Code's
-`claude plugin eval` command. This harness is specific to Claude Code; the skill itself and
-its helper scripts are agent-neutral.
+`evals/` contains representative tasks and expected outcomes for checking the skill. Run them
+with an evaluation harness available in your environment, or use them as manual review cases.
 
 | Case | Tests |
 |---|---|
@@ -149,15 +170,9 @@ its helper scripts are agent-neutral.
 | `onboard-flask-from-url` | Full deep dive from a GitHub URL (a Python library) |
 | `focused-question-chi` | Focused-question mode on a Go library: routing, middleware and `Mount` |
 
-To run them, from the repo root (these are real, billed model runs):
-
-```bash
-claude plugin eval . --allow-tools Write,Edit,Bash --scaffold
-```
-
-In the first benchmark (one run each, so treat it as directional), the skill passed 8/8 checks
-against 6/8 without it, on the TypeScript case. It was also faster, and it produced about 7× more
-verified `file:line` citations. The outputs, grading evidence and notes are in [`benchmarks/`](benchmarks/).
+The first benchmark ran one comparison per configuration, so treat its results as directional.
+With the skill, the TypeScript case passed 8/8 checks versus 6/8 without it, with more verified
+`file:line` citations. Outputs, grading evidence and notes are in [`benchmarks/`](benchmarks/).
 
 ## Contributing
 

@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
-# Install the repo-deep-dive Agent Skill into a coding agent's skill directory.
+# Install the repo-deep-dive Agent Skill for a common agent or into a chosen directory.
 #
 # Usage:
 #   ./install.sh [--agent AGENT] [--scope personal|project] [--dir PATH] [--link]
 #
 # Examples:
 #   ./install.sh
-#   ./install.sh --agent codex --scope project
-#   ./install.sh --agent codex --link
-#   curl -fsSL https://raw.githubusercontent.com/pranjalmittal/repo-deep-dive/main/install.sh | bash
+#   ./install.sh --agent codex
+#   ./install.sh --agent my-agent
+#   ./install.sh --dir /path/to/agent/skills/repo-deep-dive --link
 
 set -euo pipefail
 
 REPO_URL="https://github.com/pranjalmittal/repo-deep-dive.git"
 SKILL_NAME="repo-deep-dive"
 
-agent="codex"
+agent=""
 scope="personal"
 target=""
 link_from_checkout=false
@@ -24,10 +24,10 @@ usage() {
     cat <<EOF
 Usage: $0 [--agent AGENT] [--scope personal|project] [--dir PATH] [--link]
 
-Agents: codex (default), claude, cursor, copilot
-Scopes: personal (default), project
-
---dir PATH  Install into PATH instead of the agent/scope default.
+Common agents: codex, claude, cursor, copilot
+--agent AGENT  Install for a common agent, or enter a custom agent name.
+--scope SCOPE  Use the agent's personal or project skill directory (default: personal).
+--dir PATH     Install into this skill directory, bypassing agent path selection.
 --link      Symlink this local checkout instead of cloning from GitHub.
             Requires running install.sh from a checkout.
 
@@ -76,38 +76,67 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [[ -z "$target" && -z "$agent" ]]; then
+    if [[ -t 0 ]]; then
+        cat <<EOF
+Choose an agent:
+  1) Codex
+  2) Claude Code
+  3) Cursor
+  4) GitHub Copilot
+  5) Other
+EOF
+        read -r -p "Selection [1-5]: " selection
+        case "$selection" in
+            1) agent="codex" ;;
+            2) agent="claude" ;;
+            3) agent="cursor" ;;
+            4) agent="copilot" ;;
+            5) agent="other" ;;
+            *) fail "choose a number from 1 to 5" ;;
+        esac
+    else
+        fail "specify --agent AGENT or --dir PATH"
+    fi
+fi
+
 if [[ -z "$target" ]]; then
     case "$agent" in
-        claude)
-            base_personal="$HOME/.claude/skills"
-            base_project=".claude/skills"
-            ;;
         codex)
             base_personal="${CODEX_HOME:-$HOME/.codex}/skills"
             base_project=".agents/skills"
+            ;;
+        claude|claude-code)
+            base_personal="$HOME/.claude/skills"
+            base_project=".claude/skills"
             ;;
         cursor)
             base_personal="$HOME/.cursor/skills"
             base_project=".cursor/skills"
             ;;
-        copilot)
+        copilot|github-copilot)
             base_personal="$HOME/.copilot/skills"
             base_project=".github/skills"
             ;;
         *)
-            echo "Unknown agent: $agent" >&2
-            exit 2
+            if [[ -t 0 ]]; then
+                read -r -p "Enter the skill directory path for '$agent': " target
+            else
+                fail "no built-in path for '$agent'; pass --dir PATH"
+            fi
+            [[ -n "$target" ]] || fail "enter a skill directory path or pass --dir PATH"
             ;;
     esac
 
-    if [[ "$scope" == "personal" ]]; then
-        target="$base_personal/$SKILL_NAME"
-    elif [[ "$scope" == "project" ]]; then
-        project_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)"
-        target="$project_root/$base_project/$SKILL_NAME"
-    else
-        echo "Unknown scope: $scope" >&2
-        exit 2
+    if [[ -z "$target" ]]; then
+        if [[ "$scope" == "personal" ]]; then
+            target="$base_personal/$SKILL_NAME"
+        elif [[ "$scope" == "project" ]]; then
+            project_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)"
+            target="$project_root/$base_project/$SKILL_NAME"
+        else
+            fail "unknown scope '$scope'; choose personal or project"
+        fi
     fi
 fi
 
