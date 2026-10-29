@@ -43,50 +43,41 @@ The skill adjusts to the question:
 
 ## Install
 
-Requirements: `git` and Python 3.9+ (standard library only). The [GitHub CLI](https://cli.github.com/)
-is optional; it's used for private repos and PR/issue context.
+Requirements: Bash and `git` for the installer, and Python 3.9+ (standard library only) for
+the skill. The [GitHub CLI](https://cli.github.com/) is optional; it's used for private repos
+and PR/issue context.
 
-Install the skill directory in a location your coding agent scans for Agent Skills. Common
-locations include the following. Run only the commands for the agent and scope you want:
-
-```bash
-# Codex
-mkdir -p ~/.codex/skills
-git clone https://github.com/pranjalmittal/repo-deep-dive.git ~/.codex/skills/repo-deep-dive
-
-# Claude Code
-mkdir -p ~/.claude/skills
-git clone https://github.com/pranjalmittal/repo-deep-dive.git ~/.claude/skills/repo-deep-dive
-
-# Cursor
-mkdir -p ~/.cursor/skills
-git clone https://github.com/pranjalmittal/repo-deep-dive.git ~/.cursor/skills/repo-deep-dive
-```
-
-For a project-scoped installation, use the corresponding folder supported by your agent.
-For example:
+The installer defaults to a personal Codex skill directory:
 
 ```bash
-# Codex
-mkdir -p .agents/skills
-git clone https://github.com/pranjalmittal/repo-deep-dive.git .agents/skills/repo-deep-dive
-
-# Claude Code
-mkdir -p .claude/skills
-git clone https://github.com/pranjalmittal/repo-deep-dive.git .claude/skills/repo-deep-dive
-
-# Cursor
-mkdir -p .cursor/skills
-git clone https://github.com/pranjalmittal/repo-deep-dive.git .cursor/skills/repo-deep-dive
-
-# GitHub Copilot
-mkdir -p .github/skills
-git clone https://github.com/pranjalmittal/repo-deep-dive.git .github/skills/repo-deep-dive
+./install.sh
 ```
 
-Check your agent's documentation for its current skill directory and whether it supports
-personal or project-scoped skills. Update an installation with
-`git -C <skill-directory> pull`.
+Install a symlink to the current checkout for temporary use or local development:
+
+```bash
+./install.sh --agent codex --link
+```
+
+The symlink points at this checkout, so edits are available immediately. Remove the symlink
+from `~/.codex/skills/repo-deep-dive` when you no longer need it.
+
+Install for another supported agent, or into the current project:
+
+```bash
+./install.sh --agent claude
+./install.sh --agent cursor
+./install.sh --agent copilot --scope project
+./install.sh --agent codex --scope project
+```
+
+The installer also accepts `--dir PATH` for an agent-specific skill directory. Check your
+agent's documentation for its current skill paths. To install without first cloning this
+repository, run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/pranjalmittal/repo-deep-dive/main/install.sh | bash -s -- --agent codex
+```
 
 Once installed, ask your agent something like *"help me understand this repo"*. If the agent
 supports direct skill invocation, invoke `repo-deep-dive` by its name.
@@ -133,6 +124,7 @@ blocks.
 ## Repository layout
 
 ```
+install.sh                  installs or links the skill for an agent
 SKILL.md                    portable skill instructions and workflow
 scripts/
   repo_survey.py            structural survey (read-only, stdlib only)
