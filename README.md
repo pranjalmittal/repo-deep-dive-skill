@@ -1,8 +1,14 @@
 # repo-deep-dive
 
-A [Claude Code](https://docs.claude.com/en/docs/claude-code) skill that builds a thorough,
+A portable [Agent Skill](https://agentskills.io/) for coding agents that builds a thorough,
 code-grounded understanding of a repository (a local checkout or a GitHub URL). It writes a
-`REPO_GUIDE.md` that a new engineer can actually onboard from.
+`REPO_GUIDE.md` that a new engineer can actually onboard from. The skill uses the standard
+`SKILL.md` format and doesn't depend on a specific model or agent vendor.
+
+Use it with any coding agent that supports Agent Skills. If your agent doesn't have a skill
+loader, provide it with this repository's `SKILL.md` as instructions and keep the full
+repository available so it can read the referenced scripts and guides. The agent needs to
+read files, run Python 3 and Git commands, and write Markdown files.
 
 It tries to give you the mental model a senior engineer on the team carries: what the project
 is for, how it's shaped, what happens at runtime when its main features are used, where you'd
@@ -40,22 +46,50 @@ The skill adjusts to the question:
 Requirements: `git` and Python 3.9+ (standard library only). The [GitHub CLI](https://cli.github.com/)
 is optional; it's used for private repos and PR/issue context.
 
-**For all your projects** (personal skills):
+Install the skill directory in a location your coding agent scans for Agent Skills. Common
+locations include the following. Run only the commands for the agent and scope you want:
 
 ```bash
-git clone https://github.com/<owner>/repo-deep-dive.git ~/.claude/skills/repo-deep-dive
+# Codex
+mkdir -p ~/.codex/skills
+git clone https://github.com/pranjalmittal/repo-deep-dive.git ~/.codex/skills/repo-deep-dive
+
+# Claude Code
+mkdir -p ~/.claude/skills
+git clone https://github.com/pranjalmittal/repo-deep-dive.git ~/.claude/skills/repo-deep-dive
+
+# Cursor
+mkdir -p ~/.cursor/skills
+git clone https://github.com/pranjalmittal/repo-deep-dive.git ~/.cursor/skills/repo-deep-dive
 ```
 
-**For one project only** (commit it so your team gets it too):
+For a project-scoped installation, use the corresponding folder supported by your agent.
+For example:
 
 ```bash
-git clone https://github.com/<owner>/repo-deep-dive.git .claude/skills/repo-deep-dive
+# Codex
+mkdir -p .agents/skills
+git clone https://github.com/pranjalmittal/repo-deep-dive.git .agents/skills/repo-deep-dive
+
+# Claude Code
+mkdir -p .claude/skills
+git clone https://github.com/pranjalmittal/repo-deep-dive.git .claude/skills/repo-deep-dive
+
+# Cursor
+mkdir -p .cursor/skills
+git clone https://github.com/pranjalmittal/repo-deep-dive.git .cursor/skills/repo-deep-dive
+
+# GitHub Copilot
+mkdir -p .github/skills
+git clone https://github.com/pranjalmittal/repo-deep-dive.git .github/skills/repo-deep-dive
 ```
 
-**Update** with `git -C ~/.claude/skills/repo-deep-dive pull`, or use the project path instead.
+Check your agent's documentation for its current skill directory and whether it supports
+personal or project-scoped skills. Update an installation with
+`git -C <skill-directory> pull`.
 
-Claude Code picks the skill up automatically. Ask something like *"help me understand this
-repo"*, or invoke it directly with `/repo-deep-dive`.
+Once installed, ask your agent something like *"help me understand this repo"*. If the agent
+supports direct skill invocation, invoke `repo-deep-dive` by its name.
 
 ## How it works
 
@@ -66,7 +100,8 @@ repo"*, or invoke it directly with `/repo-deep-dive`.
    tests, largest files, churn hotspots, contributors and TODO counts.
 3. **Map the architecture.** Entry points, components, layers, data model, config and
    integrations. Stack-specific hints live in [`references/ecosystem_hints.md`](references/ecosystem_hints.md).
-   For large repos and monorepos, the skill fans out to parallel sub-agents per component.
+   For large repos and monorepos, it uses parallel agents per component when the host supports
+   delegation; otherwise it inspects components sequentially.
 4. **Trace 2–4 key flows** end to end through the real call chain.
 5. **Development workflow, history and ownership, gotchas.**
 6. **Write the guide** from [`references/guide_template.md`](references/guide_template.md),
@@ -98,21 +133,23 @@ blocks.
 ## Repository layout
 
 ```
-SKILL.md                    the skill: workflow and principles (what Claude reads)
+SKILL.md                    portable skill instructions and workflow
 scripts/
   repo_survey.py            structural survey (read-only, stdlib only)
   check_paths.py            verifies path:line citations in a guide
 references/
   guide_template.md         REPO_GUIDE.md structure
   ecosystem_hints.md        where things live per stack, plus grep recipes
-evals/                      test cases for `claude plugin eval`
+evals/                      test cases for the Claude Code evaluation harness
 benchmarks/                 with- vs. without-skill results, graded
 examples/                   a sample generated guide
 ```
 
 ## Evaluating changes
 
-`evals/` holds test cases in the format `claude plugin eval` reads:
+`evals/` holds test cases in Anthropic's skill-creator format, evaluated with Claude Code's
+`claude plugin eval` command. This harness is specific to Claude Code; the skill itself and
+its helper scripts are agent-neutral.
 
 | Case | Tests |
 |---|---|

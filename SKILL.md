@@ -2,10 +2,14 @@
 name: repo-deep-dive
 description: Thoroughly understand a code repository, from a local checkout or a GitHub URL, and write a durable REPO_GUIDE.md covering architecture, key flows traced end-to-end with file:line citations, data model, config, dev workflow, ownership/hotspots, gotchas and a reading order. Use this whenever someone wants to understand, explore, onboard onto, ramp up on, audit, or get an overview or architecture walkthrough of a repo, project or codebase. That includes casual asks like "what does this repo do", "I just joined this team, help me get up to speed", "explain how this project is structured", "walk me through github.com/org/repo", or "how does X work in this codebase" when answering means tracing across many files. Prefer this over ad-hoc exploration for any whole-repo understanding task.
 license: MIT
-compatibility: Requires git and Python 3.9+ (standard library only). The GitHub CLI (gh) is optional, for private repos and PR/issue context.
+compatibility: Agent Skills-compatible coding agent with file read/search, shell, and write capabilities. Requires git and Python 3.9+ (standard library only). The GitHub CLI (gh) is optional, for private repos and PR/issue context.
 ---
 
 # Repo Deep Dive
+
+This skill uses the Agent Skills format and is tool-vendor neutral. Use the host agent's
+equivalent file-reading, search, shell, and file-writing tools for the steps below. If the
+host doesn't support delegation, inspect independent components sequentially.
 
 The goal is the mental model a senior engineer on the team carries in their head:
 what the project is for, how it's shaped, what happens at runtime when its main
@@ -89,7 +93,9 @@ python3 -I <skill-dir>/scripts/repo_survey.py <repo-root> > <scratch>/survey.md
 ```
 
 Then read, in this order:
-1. The README, plus `CLAUDE.md` / `AGENTS.md` / `CONTRIBUTING*` / `ARCHITECTURE*` / ADRs if present.
+1. The README, repository instructions for this and other coding agents (for example
+   `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, and
+   `.cursor/rules/`), plus `CONTRIBUTING*` / `ARCHITECTURE*` / ADRs if present.
    These state the authors' intent. Trust them less than code, but read them first.
 2. The root manifests (`package.json`, `pyproject.toml`, `go.mod`, `pom.xml`, `Cargo.toml`, …)
    and workspace configs. Dependencies tell you the capabilities: web framework, ORM,
@@ -125,14 +131,16 @@ Establish, with citations:
 
 **Large repos and monorepos** (roughly more than 1,500 code files, or several
 independent services or packages): build the package and service map yourself first.
-Then fan out with parallel `Explore` subagents, one per major component, each with a
-narrow brief: "For `<path>`, report its purpose, public interface, key files, what it
-depends on and what depends on it, notable patterns, and anything surprising. Cite
-`path:line` for every claim. Mark anything you didn't confirm in code as inferred."
-Keep the cross-cutting synthesis (architecture, flows that cross components) for
-yourself, because that's where subagent summaries lose detail. If there are many independent
-services and the user hasn't said which ones matter, give a map of all of them and deep-dive
-on the shared core plus the most central one or two. Then offer to go deeper on others.
+If your coding-agent environment supports delegation, use parallel agents to inspect
+major components, one per component, with a narrow brief: "For `<path>`, report its
+purpose, public interface, key files, what it depends on and what depends on it,
+notable patterns, and anything surprising. Cite `path:line` for every claim. Mark
+anything you didn't confirm in code as inferred." If delegation isn't available,
+inspect the components sequentially. Keep the cross-cutting synthesis (architecture,
+flows that cross components) in the main analysis. If there are many independent
+services and the user hasn't said which ones matter, give a map of all of them and
+deep-dive on the shared core plus the most central one or two. Then offer to go deeper
+on others.
 
 ### 3. Trace the key flows (depth)
 
