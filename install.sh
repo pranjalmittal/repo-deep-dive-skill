@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-REPO_URL="https://github.com/pranjalmittal/repo-deep-dive.git"
+REPO_URL="https://github.com/pranjalmittal/repo-deep-dive-skill.git"
 SKILL_NAME="repo-deep-dive"
 
 agent=""
@@ -193,9 +193,9 @@ else
         origin="$(git -C "$target" remote get-url origin 2>/dev/null || true)"
         normalized_origin="${origin%.git}"
         case "$normalized_origin" in
-            https://github.com/pranjalmittal/repo-deep-dive|\
-            git@github.com:pranjalmittal/repo-deep-dive|\
-            ssh://git@github.com/pranjalmittal/repo-deep-dive)
+            https://github.com/pranjalmittal/repo-deep-dive-skill|\
+            git@github.com:pranjalmittal/repo-deep-dive-skill|\
+            ssh://git@github.com/pranjalmittal/repo-deep-dive-skill)
                 ;;
             *)
                 fail "target is not a checkout of $REPO_URL: $target"

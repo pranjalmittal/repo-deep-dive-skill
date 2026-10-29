@@ -98,7 +98,7 @@ To run the installer without first cloning this repository, specify a built-in a
 `--dir` explicitly:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pranjalmittal/repo-deep-dive/main/install.sh | bash -s -- --agent codex
+curl -fsSL https://raw.githubusercontent.com/pranjalmittal/repo-deep-dive-skill/main/install.sh | bash -s -- --agent codex
 ```
 
 Once installed, ask your agent something like *"help me understand this repo"*. If the agent
