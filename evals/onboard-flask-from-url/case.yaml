@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: onboard-flask-from-url
+expected_outcome: |
+  Clones the repo, produces a thorough guide to Flask's architecture (app/blueprints/sansio split, contexts, request dispatch traced with file:line citations), dev workflow from real config, and a reading order.

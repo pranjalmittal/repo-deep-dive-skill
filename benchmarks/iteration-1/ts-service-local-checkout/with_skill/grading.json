@@ -1,0 +1,54 @@
+{
+  "expectations": [
+    {
+      "text": "A persistent onboarding guide is written as REPO_GUIDE.md at the repo root, covering structure, auth, data storage and how to run/test.",
+      "passed": true,
+      "evidence": "REPO_GUIDE.md (347 lines) exists at work/realworld-api/REPO_GUIDE.md; git status shows it untracked. Has Architecture, Key flows (auth), Data model, Development workflow sections."
+    },
+    {
+      "text": "The auth explanation traces the real flow with file references: the Authorization header accepts both `Token` and `Bearer` (src/app/routes/auth/auth.ts), express-jwt `auth.required`/`auth.optional` middleware populates `req.auth.user.id`, tokens are signed in token.utils.ts with a 60d expiry, and passwords are hashed/compared with bcryptjs in auth.service.ts.",
+      "passed": true,
+      "evidence": "Key flow 1 cites getTokenFromHeaders accepting Token or Bearer (auth.ts:4-12), auth.required/optional (auth.ts:15-19, 20-25), req.auth?.user?.id, jwt.sign expiresIn '60d' (token.utils.ts:3-6), bcrypt hash/compare in auth.service.ts."
+    },
+    {
+      "text": "The output flags the hard-coded `'superSecret'` fallback for JWT_SECRET as a security risk or gotcha.",
+      "passed": true,
+      "evidence": "Gotcha #2 'Hard-coded JWT secret fallback superSecret in three places' with all three line citations; also in the env var table."
+    },
+    {
+      "text": "The data model section correctly states Prisma with PostgreSQL via DATABASE_URL and names the four models User, Article, Comment and Tag with their key relations (follows, favorites, article tags), citing src/prisma/schema.prisma.",
+      "passed": true,
+      "evidence": "Data model table cites schema.prisma:11-24 etc. for User/Article/Comment/Tag; relations _ArticleToTag, _UserFavorites, _UserFollows with migration line refs; mermaid ER diagram; PostgreSQL + DATABASE_URL."
+    },
+    {
+      "text": "Run instructions use only commands that exist in the repo (e.g. npm install, npx prisma generate, npx prisma migrate deploy, npx nx serve api, npx prisma db seed, npx nx test) and invent no nonexistent npm scripts such as `npm run dev`.",
+      "passed": true,
+      "evidence": "All commands are sourced from README/package.json/project.json with a citation (npm install, npx prisma generate/migrate deploy/db seed, npx nx serve api, npm test, npx nx docker-build api). The --testFile flag is explicitly marked inferred. No npm run dev."
+    },
+    {
+      "text": "The output explains that unit tests in src/tests mock Prisma with jest-mock-extended (src/tests/prisma-mock.ts) so no database is needed, distinct from the e2e tests in e2e/ that need a running server.",
+      "passed": true,
+      "evidence": "Says unit tests have no database: prisma-mock.ts:6-15 replaces prisma-client with mockDeep<PrismaClient>(); e2e/ described as an Nx placeholder scaffold. It suspects an import-order mock bug in auth.service.test.ts but marks it unverified."
+    },
+    {
+      "text": "The deliverables cite at least 15 repo file paths, and every cited path and line number resolves (check_paths.py reports no broken references).",
+      "passed": true,
+      "evidence": "check_paths.py (fixed version): 189 references checked, all resolve; 141 file:line citations."
+    },
+    {
+      "text": "The run did not install dependencies or execute repo code: there is no node_modules directory in the run's checkout.",
+      "passed": true,
+      "evidence": "No node_modules anywhere in work/; the only files created are survey.md and REPO_GUIDE.md. Only read-only git and the bundled scripts were run."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  },
+  "timing": {
+    "executor_duration_seconds": 353.1,
+    "total_duration_seconds": 353.1
+  }
+}

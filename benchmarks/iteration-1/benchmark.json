@@ -1,0 +1,186 @@
+{
+  "metadata": {
+    "skill_name": "repo-deep-dive",
+    "executor_model": "claude-opus-5-5",
+    "analyzer_model": "claude-opus-5-5",
+    "timestamp": "2026-10-29T09:45:47Z",
+    "evals_run": [
+      "ts-service-local-checkout"
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": "ts-service-local-checkout",
+      "eval_name": "ts-service-local-checkout",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 353.1,
+        "tokens": 123636,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "A persistent onboarding guide is written as REPO_GUIDE.md at the repo root, covering structure, auth, data storage and how to run/test.",
+          "passed": true,
+          "evidence": "REPO_GUIDE.md (347 lines) exists at work/realworld-api/REPO_GUIDE.md; git status shows it untracked. Has Architecture, Key flows (auth), Data model, Development workflow sections."
+        },
+        {
+          "text": "The auth explanation traces the real flow with file references: the Authorization header accepts both `Token` and `Bearer` (src/app/routes/auth/auth.ts), express-jwt `auth.required`/`auth.optional` middleware populates `req.auth.user.id`, tokens are signed in token.utils.ts with a 60d expiry, and passwords are hashed/compared with bcryptjs in auth.service.ts.",
+          "passed": true,
+          "evidence": "Key flow 1 cites getTokenFromHeaders accepting Token or Bearer (auth.ts:4-12), auth.required/optional (auth.ts:15-19, 20-25), req.auth?.user?.id, jwt.sign expiresIn '60d' (token.utils.ts:3-6), bcrypt hash/compare in auth.service.ts."
+        },
+        {
+          "text": "The output flags the hard-coded `'superSecret'` fallback for JWT_SECRET as a security risk or gotcha.",
+          "passed": true,
+          "evidence": "Gotcha #2 'Hard-coded JWT secret fallback superSecret in three places' with all three line citations; also in the env var table."
+        },
+        {
+          "text": "The data model section correctly states Prisma with PostgreSQL via DATABASE_URL and names the four models User, Article, Comment and Tag with their key relations (follows, favorites, article tags), citing src/prisma/schema.prisma.",
+          "passed": true,
+          "evidence": "Data model table cites schema.prisma:11-24 etc. for User/Article/Comment/Tag; relations _ArticleToTag, _UserFavorites, _UserFollows with migration line refs; mermaid ER diagram; PostgreSQL + DATABASE_URL."
+        },
+        {
+          "text": "Run instructions use only commands that exist in the repo (e.g. npm install, npx prisma generate, npx prisma migrate deploy, npx nx serve api, npx prisma db seed, npx nx test) and invent no nonexistent npm scripts such as `npm run dev`.",
+          "passed": true,
+          "evidence": "All commands are sourced from README/package.json/project.json with a citation (npm install, npx prisma generate/migrate deploy/db seed, npx nx serve api, npm test, npx nx docker-build api). The --testFile flag is explicitly marked inferred. No npm run dev."
+        },
+        {
+          "text": "The output explains that unit tests in src/tests mock Prisma with jest-mock-extended (src/tests/prisma-mock.ts) so no database is needed, distinct from the e2e tests in e2e/ that need a running server.",
+          "passed": true,
+          "evidence": "Says unit tests have no database: prisma-mock.ts:6-15 replaces prisma-client with mockDeep<PrismaClient>(); e2e/ described as an Nx placeholder scaffold. It suspects an import-order mock bug in auth.service.test.ts but marks it unverified."
+        },
+        {
+          "text": "The deliverables cite at least 15 repo file paths, and every cited path and line number resolves (check_paths.py reports no broken references).",
+          "passed": true,
+          "evidence": "check_paths.py (fixed version): 189 references checked, all resolve; 141 file:line citations."
+        },
+        {
+          "text": "The run did not install dependencies or execute repo code: there is no node_modules directory in the run's checkout.",
+          "passed": true,
+          "evidence": "No node_modules anywhere in work/; the only files created are survey.md and REPO_GUIDE.md. Only read-only git and the bundled scripts were run."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": "ts-service-local-checkout",
+      "eval_name": "ts-service-local-checkout",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 6,
+        "failed": 2,
+        "total": 8,
+        "time_seconds": 449.8,
+        "tokens": 115194,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "A persistent onboarding guide is written as REPO_GUIDE.md at the repo root, covering structure, auth, data storage and how to run/test.",
+          "passed": false,
+          "evidence": "Wrote ONBOARDING_GUIDE.md (248 lines) to outputs only; there's no REPO_GUIDE.md in the repo root. A persistent guide does exist, so this mostly tests the skill's naming and location convention."
+        },
+        {
+          "text": "The auth explanation traces the real flow with file references: the Authorization header accepts both `Token` and `Bearer` (src/app/routes/auth/auth.ts), express-jwt `auth.required`/`auth.optional` middleware populates `req.auth.user.id`, tokens are signed in token.utils.ts with a 60d expiry, and passwords are hashed/compared with bcryptjs in auth.service.ts.",
+          "passed": true,
+          "evidence": "Section 3: Token or Bearer accepted by getTokenFromHeaders, express-jwt sets req.auth, so handlers read req.auth?.user?.id; jwt.sign with expiresIn '60d' (token.utils.ts:3-6); bcrypt. Citations use short paths (auth.ts:16,21)."
+        },
+        {
+          "text": "The output flags the hard-coded `'superSecret'` fallback for JWT_SECRET as a security risk or gotcha.",
+          "passed": true,
+          "evidence": "Secret handling paragraph plus Gotcha #2: JWT_SECRET falls back to 'superSecret' in three places, anyone can forge tokens."
+        },
+        {
+          "text": "The data model section correctly states Prisma with PostgreSQL via DATABASE_URL and names the four models User, Article, Comment and Tag with their key relations (follows, favorites, article tags), citing src/prisma/schema.prisma.",
+          "passed": true,
+          "evidence": "Section 4: PostgreSQL via DATABASE_URL, schema.prisma; ASCII relation diagram with User/Article/Comment/Tag, _ArticleToTag, UserFavorites, UserFollows; model table."
+        },
+        {
+          "text": "Run instructions use only commands that exist in the repo (e.g. npm install, npx prisma generate, npx prisma migrate deploy, npx nx serve api, npx prisma db seed, npx nx test) and invent no nonexistent npm scripts such as `npm run dev`.",
+          "passed": true,
+          "evidence": "Commands: npm ci, npx prisma generate/migrate deploy/db seed, npx nx serve api, npx nx e2e e2e, plus a docker run for a local Postgres (helper, not a claimed repo script). No invented npm scripts."
+        },
+        {
+          "text": "The output explains that unit tests in src/tests mock Prisma with jest-mock-extended (src/tests/prisma-mock.ts) so no database is needed, distinct from the e2e tests in e2e/ that need a running server.",
+          "passed": true,
+          "evidence": "Explains that prisma-mock.ts uses jest.mock + mockDeep, and that e2e needs a running server. It also verified by running the suite that 7 of 27 unit tests fail because of import order, which is stronger evidence than the with-skill run's unverified suspicion."
+        },
+        {
+          "text": "The deliverables cite at least 15 repo file paths, and every cited path and line number resolves (check_paths.py reports no broken references).",
+          "passed": true,
+          "evidence": "check_paths.py: 55 references, all resolve (many are short bare filenames like auth.ts:16 that resolve via a unique-name search); 20 file:line citations, meeting the threshold of 15."
+        },
+        {
+          "text": "The run did not install dependencies or execute repo code: there is no node_modules directory in the run's checkout.",
+          "passed": false,
+          "evidence": "It ran npm ci, prisma generate/migrate/seed, built and started the server, ran the unit tests and lint, and started a Postgres Docker container, all inside a scratch copy (work/verify). The checkout itself has no node_modules, so the literal sub-check passes, but the assertion's main clause (did not install or execute repo code) fails."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 353.1,
+        "stddev": 0.0,
+        "min": 353.1,
+        "max": 353.1
+      },
+      "tokens": {
+        "mean": 123636.0,
+        "stddev": 0.0,
+        "min": 123636,
+        "max": 123636
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.75,
+        "stddev": 0.0,
+        "min": 0.75,
+        "max": 0.75
+      },
+      "time_seconds": {
+        "mean": 449.8,
+        "stddev": 0.0,
+        "min": 449.8,
+        "max": 449.8
+      },
+      "tokens": {
+        "mean": 115194.0,
+        "stddev": 0.0,
+        "min": 115194,
+        "max": 115194
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.25",
+      "time_seconds": "-96.7",
+      "tokens": "+8442"
+    }
+  },
+  "notes": [
+    "Only 1 case x 1 run per configuration, so there is no variance data. Treat the deltas as directional.",
+    "Both failed baseline assertions are design-driven: 'REPO_GUIDE.md at repo root' tests the skill's naming convention, and 'did not execute repo code' tests the skill's read-only rule. On content accuracy (auth, data model, commands, tests, JWT secret) both runs scored 6/6, so those assertions don't discriminate on this small repo.",
+    "Baseline ran the code (npm ci, Postgres in Docker, server, tests) and so confirmed real findings: 7/27 unit tests fail from mock import order, lint fails, and nx injects .env but the built app doesn't. The with-skill run only suspected the test bug ('not verified').",
+    "The with-skill guide is about 2x longer with about 7x more file:line citations (141 vs 20), uses full repo-relative paths, and includes a Mermaid architecture diagram, an ER diagram and a 19-endpoint table. It was 97s faster and used ~8k more tokens.",
+    "The with-skill run surfaced 29 false positives from check_paths.py (URL routes, identifiers, gitignored paths, and an lstrip bug on dotfiles). These are fixed after the run; the re-check shows 0 false positives."
+  ]
+}

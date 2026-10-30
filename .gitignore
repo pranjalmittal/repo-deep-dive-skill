@@ -1,0 +1,5 @@
+.DS_Store
+__pycache__/
+*.pyc
+# `claude plugin eval` writes its reports here
+evals/results/

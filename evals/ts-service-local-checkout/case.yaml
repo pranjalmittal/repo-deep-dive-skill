@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: ts-service-local-checkout
+expected_outcome: |
+  Produces an onboarding guide for the Express/Prisma RealWorld API: structure, JWT auth flow traced through code, Prisma data model, and only real run/test commands; written to REPO_GUIDE.md in the repo.
+context:
+  scaffold_script: place-files.sh
