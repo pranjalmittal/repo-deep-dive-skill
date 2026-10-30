@@ -2,34 +2,38 @@
 # Install the repo-deep-dive Agent Skill for a common agent or into a chosen directory.
 #
 # Usage:
-#   ./install.sh [--agent AGENT] [--scope personal|project] [--dir PATH] [--link]
+#   ./install.sh [--agent AGENT] [--scope personal|project] [--dir PATH] [--ref REF] [--link]
 #
 # Examples:
 #   ./install.sh
 #   ./install.sh --agent codex
 #   ./install.sh --agent my-agent
+#   ./install.sh --ref v0.1.0
 #   ./install.sh --dir /path/to/agent/skills/repo-deep-dive --link
 
 set -euo pipefail
 
 REPO_URL="https://github.com/pranjalmittal/repo-deep-dive-skill.git"
 SKILL_NAME="repo-deep-dive"
+DEFAULT_REF="main"
 
 agent=""
 scope="personal"
 target=""
+ref="$DEFAULT_REF"
 link_from_checkout=false
 
 usage() {
     cat <<EOF
-Usage: $0 [--agent AGENT] [--scope personal|project] [--dir PATH] [--link]
+Usage: $0 [--agent AGENT] [--scope personal|project] [--dir PATH] [--ref REF] [--link]
 
 Common agents: codex, claude, cursor, copilot
 --agent AGENT  Install for a common agent, or enter a custom agent name.
 --scope SCOPE  Use the agent's personal or project skill directory (default: personal).
 --dir PATH     Install into this skill directory, bypassing agent path selection.
---link      Symlink this local checkout instead of cloning from GitHub.
-            Requires running install.sh from a checkout.
+--ref REF      Git tag, branch, or commit to install (default: $DEFAULT_REF).
+--link         Symlink this local checkout instead of cloning from GitHub.
+               Requires running install.sh from a checkout.
 
 Run with --help to see this message.
 EOF
@@ -58,6 +62,12 @@ while [[ $# -gt 0 ]]; do
             (($# >= 2)) || fail "--dir requires a value"
             [[ "$2" != --* ]] || fail "--dir requires a value"
             target="$2"
+            shift 2
+            ;;
+        --ref)
+            (($# >= 2)) || fail "--ref requires a value"
+            [[ "$2" != --* ]] || fail "--ref requires a value"
+            ref="$2"
             shift 2
             ;;
         --link)
@@ -203,11 +213,22 @@ else
         esac
 
         echo "Updating existing installation at $target"
-        git -C "$target" pull --ff-only
+        git -C "$target" fetch --tags --prune
+        git -C "$target" checkout --quiet "$ref" ||
+            fail "could not check out '$ref' in $target"
+        if git -C "$target" symbolic-ref -q HEAD >/dev/null; then
+            git -C "$target" pull --ff-only
+        else
+            echo "Checked out $ref (detached HEAD)"
+        fi
     else
-        echo "Installing $SKILL_NAME to $target"
+        echo "Installing $SKILL_NAME at $ref to $target"
         git clone "$REPO_URL" "$target"
+        git -C "$target" checkout --quiet "$ref" ||
+            fail "could not check out '$ref' in $target"
     fi
+
+    [[ -f "$target/SKILL.md" ]] || fail "installed checkout has no SKILL.md: $target"
 fi
 
 echo "Invoke the skill as: $SKILL_NAME"

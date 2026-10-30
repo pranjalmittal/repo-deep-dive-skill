@@ -90,15 +90,21 @@ Remove the link when you no longer need it; this leaves the checkout intact:
 rm /path/to/agent/skills/repo-deep-dive
 ```
 
-If the destination already contains a clone of this repository, the installer updates it with
-a fast-forward-only pull. When run from a local checkout, it recognizes a link to that checkout
-as already installed and refuses to overwrite unrelated directories or links.
+If the destination already contains a clone of this repository, the installer fetches updates
+and checks out the requested ref. When run from a local checkout, it recognizes a link to that
+checkout as already installed and refuses to overwrite unrelated directories or links.
+
+Pin a release with `--ref` for a reproducible install:
+
+```bash
+./install.sh --agent codex --ref v0.1.0
+```
 
 To run the installer without first cloning this repository, specify a built-in agent or pass
 `--dir` explicitly:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pranjalmittal/repo-deep-dive-skill/main/install.sh | bash -s -- --agent codex
+curl -fsSL https://raw.githubusercontent.com/pranjalmittal/repo-deep-dive-skill/main/install.sh | bash -s -- --agent codex --ref v0.1.0
 ```
 
 Once installed, ask your agent something like *"help me understand this repo"*. If the agent
@@ -148,6 +154,7 @@ blocks.
 ```
 install.sh                  installs or links the skill for an agent
 SKILL.md                    portable skill instructions and workflow
+CHANGELOG.md                release history
 scripts/
   repo_survey.py            structural survey (read-only, stdlib only)
   check_paths.py            verifies path:line citations in a guide
