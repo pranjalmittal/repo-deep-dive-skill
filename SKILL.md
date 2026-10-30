@@ -33,6 +33,9 @@ summary in chat.
   run build scripts, tests, git hooks or anything else the repo provides unless the
   user asks: package install scripts and Makefiles can execute arbitrary code.
   Only the bundled scripts and read-only `git` commands are needed.
+- **Redact sensitive data.** Cite secret and configuration files by path and line,
+  but never copy secret values, credentials, tokens, connection strings, or personal
+  data into the guide or chat. Name the variable and where it is read instead.
 - **Breadth first, then depth.** A cheap structural survey tells you where to
   spend expensive reading time. Then go deep where it matters: the core flows.
 - **Spend effort where understanding comes from.** Tracing a real request
@@ -57,6 +60,8 @@ work on), weight the deep dives toward it, and say so in the guide.
 
 **Local path** (or the current directory): find the root with `git rev-parse --show-toplevel`.
 If it's not a git repo, continue anyway. History-based sections just get skipped.
+For a docs-only checkout, treat the docs as the best available source, mark claims you
+cannot confirm in code as *(inferred)*, and record the gap under **Open questions**.
 
 **GitHub URL**: parse `owner/repo`, plus an optional branch or subpath from
 `/tree/<branch>/<path>` URLs. Clone into a fresh, empty directory under the
@@ -91,6 +96,11 @@ tests, largest files, churn hotspots and TODO counts. It executes nothing from t
 ```bash
 python3 -I <skill-dir>/scripts/repo_survey.py <repo-root> > <scratch>/survey.md
 ```
+
+For very large repositories, cap the survey with `--max-files` and limit churn history
+with `--hotspot-days` so the first pass stays cheap. Time-box the initial survey and
+architecture map; prioritize the core flows over exhaustive coverage, and note what
+you did not inspect under **Open questions**.
 
 Then read, in this order:
 1. The README, repository instructions for this and other coding agents (for example
@@ -182,7 +192,8 @@ Collect the things that would surprise a competent newcomer: hidden coupling (fi
 that must change together), generated code that shouldn't be hand-edited, magic
 conventions, god files (the survey's largest-files list), TODO/FIXME clusters,
 untested areas, deprecated paths still in use, doc/code drift, and security-sensitive
-code (auth, payments, PII handling, crypto, deserialization).
+code (auth, payments, PII handling, crypto, deserialization). Flag secret values or
+PII exposed in docs, examples, or config defaults, but redact the value in the guide.
 
 ### 7. Write the guide
 
